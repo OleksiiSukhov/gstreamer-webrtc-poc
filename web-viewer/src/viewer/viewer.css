@@ -62,3 +62,11 @@ button:disabled {
 #disconnect-btn:hover:not(:disabled) {
   background: #c82333;
 }
+
+#test-btn {
+  background: #6f42c1;
+}
+
+#test-btn:hover:not(:disabled) {
+  background: #5a32a3;
+}

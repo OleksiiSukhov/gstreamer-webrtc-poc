@@ -12,6 +12,7 @@ class WebRTCViewer extends HTMLElement {
     video: HTMLVideoElement;
     connectButton: HTMLButtonElement;
     disconnectButton: HTMLButtonElement;
+    testButton: HTMLButtonElement;
   } | null = null;
 
   private stateStore: StateStore;
@@ -68,7 +69,8 @@ class WebRTCViewer extends HTMLElement {
     this.elements = {
       video: this.shadowRoot!.getElementById('video') as HTMLVideoElement,
       connectButton: this.shadowRoot!.getElementById('connect-button') as HTMLButtonElement,
-      disconnectButton: this.shadowRoot!.getElementById('disconnect-btn') as HTMLButtonElement
+      disconnectButton: this.shadowRoot!.getElementById('disconnect-btn') as HTMLButtonElement,
+      testButton: this.shadowRoot!.getElementById('test-btn') as HTMLButtonElement
     };
   }
 
@@ -77,6 +79,7 @@ class WebRTCViewer extends HTMLElement {
 
     this.elements.connectButton.addEventListener('click', () => this.connect());
     this.elements.disconnectButton.addEventListener('click', () => this.disconnect());
+    this.elements.testButton.addEventListener('click', () => this.sendTestMessage());
 
     // Video input event listeners
     this.elements.video.addEventListener('keyup', (e: KeyboardEvent) => this.sendKey(e, Utils.keyboardEventType.Up));
@@ -106,11 +109,11 @@ class WebRTCViewer extends HTMLElement {
 
     this.connectionService.dataChannelMessage$.subscribe((data: any) => {
       if (data instanceof ArrayBuffer) {
-        console.log(`[${this.getTimestamp()}] [renderer] Binary message received (${data.byteLength} bytes)`);
+        console.log(`[${this.getTimestamp()}] [streamer] Binary message received (${data.byteLength} bytes)`);
         return;
       }
 
-      console.log(`[${this.getTimestamp()}] [renderer] ${data}`);
+      console.log(`[${this.getTimestamp()}] [streamer] ${data}`);
 
       if (data === 'ping') {
         this.connectionService.sendMessage('pong');
@@ -132,12 +135,45 @@ class WebRTCViewer extends HTMLElement {
     if (!this.elements) return;
     this.elements.connectButton.disabled = true;
     this.elements.disconnectButton.disabled = false;
+    this.elements.testButton.disabled = false;
   }
 
   private setDisconnected() {
     if (!this.elements) return;
     this.elements.connectButton.disabled = false;
     this.elements.disconnectButton.disabled = true;
+    this.elements.testButton.disabled = true;
+  }
+
+  private sendTestMessage() {
+    if (!this.connectionService.isDataChannelReady()) {
+      console.log('[Test] Data channel not ready');
+      return;
+    }
+
+    const testMessage = {
+      Name: 'TestMessage',
+      Payload: {
+        message: 'Hello from viewer!',
+        timestamp: Date.now(),
+        testData: {
+          numbers: [1, 2, 3],
+          nested: { key: 'value' }
+        }
+      }
+    };
+
+    console.log(`[${this.getTimestamp()}] [viewer] Sending test command:`, testMessage);
+
+    // Send as binary with type prefix (6 = JSON command)
+    const jsonString = JSON.stringify(testMessage);
+    const encoder = new TextEncoder();
+    const jsonBytes = encoder.encode(jsonString);
+    const data = new Uint8Array(1 + jsonBytes.length);
+    data[0] = Utils.customInputEvent.Message; // Type 6 = JSON command
+    data.set(jsonBytes, 1);
+
+    this.connectionService.sendBinaryData(data.buffer);
   }
 
   private sendKey(event: KeyboardEvent, type: number) {
