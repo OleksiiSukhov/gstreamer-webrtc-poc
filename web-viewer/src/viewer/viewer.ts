@@ -163,14 +163,14 @@ class WebRTCViewer extends HTMLElement {
       }
     };
 
-    console.log(`[${this.getTimestamp()}] [viewer] Sending test command:`, testMessage);
+    console.log(`[${this.getTimestamp()}] [viewer] Sending test message:`, testMessage);
 
-    // Send as binary with type prefix (6 = JSON command)
+    // Send as binary with type prefix (6 = JSON message)
     const jsonString = JSON.stringify(testMessage);
     const encoder = new TextEncoder();
     const jsonBytes = encoder.encode(jsonString);
     const data = new Uint8Array(1 + jsonBytes.length);
-    data[0] = Utils.customInputEvent.Message; // Type 6 = JSON command
+    data[0] = Utils.customInputEvent.Message; // Type 6 = JSON message
     data.set(jsonBytes, 1);
 
     this.connectionService.sendBinaryData(data.buffer);

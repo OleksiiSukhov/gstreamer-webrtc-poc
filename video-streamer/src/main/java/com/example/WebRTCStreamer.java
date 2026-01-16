@@ -404,8 +404,8 @@ public class WebRTCStreamer {
             case 2: // Mouse wheel
                 handleMouseWheelEvent(data);
                 break;
-            case 6: // JSON Command
-                handleJsonCommand(dataChannel, data);
+            case 6: // JSON message
+                handleJsonMessage(dataChannel, data);
                 break;
             default:
                 System.out.println("[DataChannel] Unknown message type: " + messageType);
@@ -457,23 +457,23 @@ public class WebRTCStreamer {
         System.out.println("[MouseWheel] deltaX=" + deltaX + ", deltaY=" + deltaY);
     }
 
-    private void handleJsonCommand(GstObject dataChannel, byte[] data) {
+    private void handleJsonMessage(GstObject dataChannel, byte[] data) {
         try {
             String jsonString = new String(data, 1, data.length - 1).trim();
-            System.out.println("\n[Command] Received JSON:");
+            System.out.println("\n[Message] Received JSON:");
             System.out.println("  " + jsonString);
 
-            JSONObject command = new JSONObject(jsonString);
-            String commandName = command.optString("Name", "unknown");
+            JSONObject message = new JSONObject(jsonString);
+            String messageName = message.optString("Name", "unknown");
 
-            // Log command details
-            System.out.println("[Command] Processing: " + commandName);
+            // Log message details
+            System.out.println("[Message] Processing: " + messageName);
 
             // Create response
             JSONObject response = new JSONObject();
-            response.put("Name", commandName);
+            response.put("Name", messageName);
             response.put("Success", true);
-            response.put("Message", "Command '" + commandName + "' received and processed");
+            response.put("Message", "Message '" + messageName + "' received and processed");
 
             // Add demo data to response
             JSONObject demoData = new JSONObject();
@@ -484,11 +484,11 @@ public class WebRTCStreamer {
             String responseJson = response.toString();
             dataChannel.emit("send-string", responseJson);
 
-            System.out.println("[Command] Response sent:");
+            System.out.println("[Message] Response sent:");
             System.out.println("  " + responseJson + "\n");
 
         } catch (Exception e) {
-            System.err.println("[Command] Error: " + e.getMessage());
+            System.err.println("[Message] Error: " + e.getMessage());
             try {
                 JSONObject errorResponse = new JSONObject();
                 errorResponse.put("Success", false);
