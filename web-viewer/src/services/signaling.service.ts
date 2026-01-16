@@ -61,6 +61,6 @@ export class SignalingService {
   }
 
   public sendCandidate(candidate: RTCIceCandidate): void {
-    this.socket?.emit('candidate', { to: 'renderer', candidate });
+    this.socket?.emit('candidate', { to: 'streamer', candidate });
   }
 }
