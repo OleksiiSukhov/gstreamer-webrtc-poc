@@ -16,7 +16,6 @@ public class App {
     public static void main(String[] args) {
         boolean useVideoFile = true;
 
-        // Check for --test-pattern argument
         for (String arg : args) {
             if ("--test-pattern".equals(arg)) {
                 useVideoFile = false;

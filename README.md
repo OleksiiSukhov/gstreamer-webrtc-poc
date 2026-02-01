@@ -1,11 +1,16 @@
-# GStreamer WebRTC POC
+# GStreamer WebRTC PoC
 
-Simple but complete example for GStreamer with WebRTC integration.
-The POC project has three components:
+Simple but complete example of GStreamer with [WebRTC](https://www.w3.org/TR/webrtc/) integration. The video streamer generates a video pipeline and streams it to the browser (video channel). The browser and streamer communicate over a data channel; the browser sends keyboard and mouse events to the streamer.
 
-1. **Web Viewer** - Browser WebRTC client (web component, TypeScript)
-2. **Signaling Server** - Socket.IO signaling for WebRTC negotiation (Node.JS, TypeScript)
-3. **Video Streamer** - Console application that streams GStreamer video via WebRTC (Java)
+**Note 1:** This is a PoC/example project — not a production-ready solution. It is intentionally simplified and covers only the happy path.
+
+**Note 2:** WebRTC requires STUN and TURN servers. For localhost, TURN configuration can be omitted for simplicity; free Google STUN servers are used by default. See [coturn](https://github.com/coturn/coturn) for a free, open-source TURN/STUN server implementation.
+
+The PoC project has three components:
+
+1. **Web Viewer** - Browser WebRTC client ([web component](https://developer.mozilla.org/en-US/docs/Web/API/Web_components), TypeScript)
+2. **Signaling Server** - Socket.IO signaling for WebRTC negotiation (Node.js, TypeScript)
+3. **Video Streamer** - Console application that streams [GStreamer](https://gstreamer.freedesktop.org/) video via WebRTC (Java)
 
 **Demo:**
 ![Demo](./demo.png)
@@ -13,20 +18,20 @@ The POC project has three components:
 ## Architecture
 
 ```
-┌─────────────┐     WebSocket      ┌──────────────────┐     WebSocket      ┌─────────────────┐
-│ Web Viewer  │ ◄────────────────► │ Signaling Server │ ◄────────────────► │ Video Streamer  │
-│  (Browser)  │                    │   (Socket.IO)    │                    │   (GStreamer)   │
-└─────────────┘                    └──────────────────┘                    └─────────────────┘
-       ▲                                                                           │
-       │                         WebRTC (Video + DataChannel)                      │
-       └───────────────────────────────────────────────────────────────────────────┘
+┌─────────────┐  WebSocket  ┌──────────────────┐  WebSocket  ┌─────────────────┐
+│ Web Viewer  │ < ─────── > │ Signaling Server │ < ─────── > │ Video Streamer  │
+│  (Browser)  │             │   (Socket.IO)    │             │   (GStreamer)   │
+└─────────────┘             └──────────────────┘             └─────────────────┘
+       ^                                                              ^
+       │                WebRTC (Video + DataChannel)                  │
+       └──────────────────────────────────────────────────────────────┘
 ```
 
 ## Components
 
 ### Web Viewer
 
-A TypeScript web component that displays the WebRTC video stream in the browser.
+A TypeScript web component that displays the WebRTC video stream, and a simple web page to host it.
 
 **Location:** `web-viewer/`
 
@@ -38,8 +43,6 @@ A TypeScript web component that displays the WebRTC video stream in the browser.
 cd web-viewer
 npm install
 npm run dev      # Development server at http://localhost:5173
-npm run build    # Production build to dist/
-npm run preview  # Preview production build
 ```
 
 **Usage:**
@@ -48,9 +51,6 @@ The viewer is available as a web component `<webrtc-viewer>`:
 
 ```html
 <webrtc-viewer></webrtc-viewer>
-
-<!-- Or with custom signaling URL -->
-<webrtc-viewer signaling-url="http://your-server:3001"></webrtc-viewer>
 ```
 
 ### Signaling Server
@@ -67,8 +67,6 @@ Simple Socket.IO-based signaling server for WebRTC negotiation between a single 
 cd signaling
 npm install
 npm run dev      # Development server at http://localhost:3001
-npm run build    # Compile TypeScript to dist/
-npm start        # Run compiled version
 ```
 
 **Status endpoint:** `GET http://localhost:3001/` returns current connection status.
@@ -79,24 +77,18 @@ Java application using GStreamer to stream video via WebRTC.
 
 **Location:** `video-streamer/`
 
-**Tech Stack:** Java 17+, GStreamer 1.x, gst1-java-core, Socket.IO Client, Maven
+**Tech Stack:** Java 11+, GStreamer 1.x, gst1-java-core, Socket.IO Client, Maven
 
 **Prerequisites:**
 
 - GStreamer 1.x installed with plugins: `vpx`, `rtp`, `webrtc`, `nice`, `dtls`, `srtp`
-- On Ubuntu/Debian: `sudo apt install gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-nice`
+- `sudo apt install gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-nice`
 
 **Build & Run:**
 
 ```bash
 cd video-streamer
-mvn clean package
-
-# Run with video file (default - requires earth_hd.mp4 in working directory)
-java -jar target/video-streamer-1.0-SNAPSHOT-jar-with-dependencies.jar
-
-# Run with test pattern
-java -jar target/video-streamer-1.0-SNAPSHOT-jar-with-dependencies.jar --test-pattern
+mvn exec:java -Dexec.mainClass="com.example.App"
 ```
 
 **Features:**
@@ -111,7 +103,7 @@ java -jar target/video-streamer-1.0-SNAPSHOT-jar-with-dependencies.jar --test-pa
 
 1. Start the signaling server (port 3001)
 2. Start the video streamer
-3. Start the web viewer: `cd web-viewer && npm run dev`
+3. Start the web viewer
 4. Open http://localhost:5173 in your browser
 5. Click "Connect" to initiate the WebRTC connection
 
@@ -123,4 +115,10 @@ The web viewer can be configured via `web-viewer/src/viewer/config.ts`:
 - `webrtc.preferredCodec` - Preferred video codec (VP8, H264, VP9)
 
 
-TODO: Mention coturn and more link to gstreamer docs and some other examples I used.
+## Useful links:
+- [GStreamer has built-in WebRTC API](https://gstreamer.freedesktop.org/documentation/webrtclib/index.html?gi-language=c)
+- [webrtcbin](https://gstreamer.freedesktop.org/documentation/webrtc/index.html?gi-language=c)
+- [gst1-java-core - Java bindings for GStreamer (without data channel though)](https://github.com/gstreamer-java/gst1-java-core)
+- [gst1-java-core WebRTC example](https://github.com/gstreamer-java/gst1-java-examples/blob/master/WebRTCSendRecv/src/main/java/org/freedesktop/gstreamer/examples/WebRTCSendRecv.java)
+- [Good article: WebRTC Plumbing with GStreamer](https://webrtchacks.com/webrtc-plumbing-with-gstreamer/)
+- [WebRTC Crash Course](https://www.youtube.com/watch?v=FExZvpVvYxA)

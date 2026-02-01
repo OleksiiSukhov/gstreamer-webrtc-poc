@@ -8,7 +8,7 @@ const app = express();
 const httpServer = createServer(app);
 const io = new SocketServer(httpServer, { cors: { origin: '*' } });
 
-// Single pair: one viewer, one streamer
+// Single pair for simplicity: one viewer, one streamer
 let viewerSocket: Socket | null = null;
 let streamerSocket: Socket | null = null;
 

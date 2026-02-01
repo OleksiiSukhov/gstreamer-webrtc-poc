@@ -74,6 +74,7 @@ export class ConnectionService {
     this.setupDataChannelListeners();
     this.log('Data channel created', 'signaling');
 
+    // Viewer initiates the connection, and sends the offer
     await this.sendOffer();
 
     const stream = await firstValueFrom(this.videoStreamSubject);
